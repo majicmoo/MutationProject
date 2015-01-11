@@ -28,7 +28,9 @@ class Authenticate:
         if note:
             payload['note']=note
         res = requests.post(url, auth = (username, password), data=json.dumps(payload))
-
+        print res
+        print res.text
+        print res.status_code
         j = json.loads(res.text)
         if res.status_code >= 400:
             msg = j.get('message', ' UNDEFINED ERROR (no error description from server)')
@@ -37,5 +39,3 @@ class Authenticate:
         token=j['token']
         print 'New token: %s' %token
 
-test = Authenticate()
-test.doAuthenticate()

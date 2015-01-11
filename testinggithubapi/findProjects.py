@@ -1,3 +1,5 @@
+GITHUB_API = 'https://api.github.com'
+
 from requests import *
 import urllib2
 from urllib2 import *
@@ -6,7 +8,8 @@ from StringIO import *
 from project import Project
 from runMutationTools import RunMutationTools
 import time
-from retrying import retry
+from retrying import retry#
+from authenticate import Authenticate
 import requests
 from urlparse import urljoin
 
@@ -31,13 +34,13 @@ class FindProjects(object):
             return False
 
         #create search url
-        start = 'https://api.github.com/search/repositories?'
+        start = GITHUB_API+ '/search/repositories?'
         search_keyword = "q="+keyword
         search_language = 'language:'+language
         sort = "sort="+sortby
         order = "order="+orderby
         size= "size:"+str(minsize) +".."+str(maxsize)
-
+        pagination = 1
         #Search for projects
         search_string = start + search_keyword + "+" + size + "+" + search_language + "&" + sort + "&" + order
 
@@ -54,24 +57,31 @@ class FindProjects(object):
 
         # search through found repository's and see if they contain files which contain junit
         # If they do store to repository_storage
+        print 'hello'
         repository_storage = []
         search_counter = 0
         print len(search_dico["items"])
         while len(repository_storage) < 10:
-            try:
-                print search_counter
-                repo_name= search_dico["items"][search_counter]["full_name"]
-                #search_for_junit = self.searchRepoForJunitTests(repo_name, "java")["total_count"]
-                #if search_for_junit < 40 and search_for_junit > 0:
-                #    repository_storage.append(Project(search_dico["items"][search_counter]))
+            if search_counter >= 30:
+                search_dico = json.load(StringIO(urlopen(Request(search_string+'&page='+str(pagination))).read()))
+                pagination += 1
+                search_counter = 0
 
-                search_for_mvn = self.search_for_mvn(repo_name)["total_count"]
-                if search_for_mvn == 2:
-                    repository_storage.append(Project(search_dico["items"][search_counter]))
+            print search_counter
+            repo_name= search_dico["items"][search_counter]["full_name"]
+            print "hi"
+            #search_for_junit = self.searchRepoForJunitTests(repo_name, "java")["total_count"]
+            #if search_for_junit < 40 and search_for_junit > 0:
+            #    repository_storage.append(Project(search_dico["items"][search_counter]))
 
-                search_counter +=1
-            except:
-                pass
+            search_for_mvn = self.search_for_mvn(repo_name)["total_count"]
+            print 'test'
+            if search_for_mvn == 2:
+                repository_storage.append(Project(search_dico["items"][search_counter]))
+
+            search_counter +=1
+
+
         return repository_storage
 
     def searchRepoForJunitTests(self, repo, language):
@@ -86,7 +96,7 @@ class FindProjects(object):
             try:
                 print "DEBUG: Requesting" ,search_string
                 temp = json.load(StringIO(urlopen(Request(search_string)).read()))
-                print temp
+                #print temp
                 return temp
             except urllib2.HTTPError:
                 print "DEBUG sleep:", 30, "seconds"
@@ -101,7 +111,7 @@ class FindProjects(object):
         print temp
         return temp'''
 
-    def search_for_mvn(selfself, repo,):
+    def search_for_mvn(self, repo):
         start = "https://api.github.com/search/code?q=project+"
         filename = "filename:pom.xml"
         repo_search = "+repo:"+repo
@@ -111,6 +121,7 @@ class FindProjects(object):
             try:
                 print "DEBUG: Requesting" ,search_string
                 temp = json.load(StringIO(urlopen(Request(search_string)).read()))
+
                 print temp
                 return temp
             except urllib2.HTTPError:
@@ -130,11 +141,14 @@ class FindProjects(object):
         try:
             print "DEBUG: Requesting" ,search_string
             temp = json.load(StringIO(urlopen(Request(search_string)).read()))
-            print temp
+            #print temp
             return temp
         except urllib2.HTTPError:
             print "DEBUG sleep:", 30, "seconds"
             time.sleep(30)
+
+#test = Authenticate()
+#test.doAuthenticate()
 
 ## testing things
 #code_search_dico = searchRepoForJunitTests("Rory1994/WAW-Assessment4", "java")
