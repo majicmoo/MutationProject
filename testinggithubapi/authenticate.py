@@ -22,7 +22,7 @@ class Authenticate:
         print username
         password = getpass.getpass("Github password: ")
         note = raw_input('Note (optional): ')
-        url = urljoin(GITHUB_API, ' authorizations')
+        url = urljoin(GITHUB_API, 'user')
         print url
         payload = {}
         if note:
@@ -36,6 +36,4 @@ class Authenticate:
             msg = j.get('message', ' UNDEFINED ERROR (no error description from server)')
             print 'ERROR: %s' % msg
             return
-        token=j['token']
-        print 'New token: %s' %token
-
+        return(username,password)

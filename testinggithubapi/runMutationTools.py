@@ -5,14 +5,28 @@ from project import Project
 
 class RunMutationTools(object):
 
-    def __init__(self):
-        self.project = None
-        self.path_cloned_repos = None
-
+    def __init__(self, project, path_cloned_repos):
+        self.project = project
+        self.path_cloned_repos = path_cloned_repos
 
     def clone_repo(self):
-        #clone repo
-        #subprocess.call("git clone "+self.project.clone, shell=True)
+        # create folder to clone into
+        max_file_number = 0
+        for files in os.walk(self.path_cloned_repos):
+            temp = map(int, files[1])
+            if len(temp)>0:
+                max_file_number = max(temp)
+            break
+        os.makedirs(self.path_cloned_repos+"\\"+str(max_file_number+1))
+        print self.path_cloned_repos+"\\"+str(max_file_number+1)
+
+
+        # clone repo
+        print "DEBUG: Cloning", self.project.name ,"into", self.path_cloned_repos+"\\"+str(max_file_number+1)
+        subprocess.call("git clone "+self.project.clone+" "+self.path_cloned_repos+"\\"+str(max_file_number+1), shell=True)
+        #pass
+
+    def run_mvn(self):
         pass
 
     def find_classpath(self):
@@ -73,39 +87,14 @@ class RunMutationTools(object):
         #compitle tests
         subprocess.call("java -cp " + self.project.classpath + self.project.main, shell=True)
 
-    def setup_repo(self, test_jars):
+    def setup_repo(self):
         # Clone repo
-        print "DEBUG: Cloning", self.project.name ,"into", self.path_cloned_repos
         self.clone_repo()
         # Find classpath
-        self.find_classpath()
-        # Find main
-        self.find_main()
-        # Compile tests and program
-        self.project.classpath += ":" + str(test_jars)
-        self.compile_repo()
-
-    def run_jumble(self, project, path_cloned_repos):
-        self.project = project
-        self.path_cloned_repos = path_cloned_repos
-        jumble_jar_path ="C:\Users\Megan\Documents\MutationProject\jumblejars\*"
-        self.setup_repo(jumble_jar_path)
-        #run jumble on project
-        subprocess.call("java -jar "+self.project.pclasspath+self.project.main, shell=True)
-
-    def run_pit(self, project, path_cloned_repos):
-        self.project = project
-        self.path_cloned_repos = path_cloned_repos
-        pit_jar_path = ""
-        mutation_reports = ""
-        target_classes = ""
-        tests = ""
-        self.setup_repo(pit_jar_path)
-        subprocess.call("java -cp "+ self.project.classpath +
-                        "\ org.pitest.mutationtest.commandline.MutationCoverageReport \ "
-                        "--reportDir " + mutation_reports + " \ --sourceDirs" + self.project.src +
-                        " \ --targetClasses " + target_classes + "--targetTests " + tests, shell=True)
-
-    def run_mujava(self, repo_url, repo_name, path_cloned_repos):
-        classpath, main = self.setup_repo(self, repo_url, repo_name, path_cloned_repos)
+        # self.find_classpath()
+        # # Find main
+        # self.find_main()
+        # # Compile tests and program
+        # self.project.classpath += ":" + str(test_jars)
+        # self.compile_repo()
 
