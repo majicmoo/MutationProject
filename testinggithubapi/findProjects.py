@@ -3,7 +3,7 @@ MAX_ITEMS = 30  # max number of items on each page in github
 SLEEP_TIME = 60  # Time between API accesses when reached rate limit
 ACCEPTED_STATUS_CODE = 200  # Status code of successful access to API
 NUMBER_OF_MAVEN_FILES = 1  # How many maven files you wish to find
-CLONED_REPOS_PATH = "C:\Users\Megan\Documents\MutationProject\\testinggithubapi\clonedRepos"
+CLONED_REPOS_PATH = "C:\Users\Megan\Documents\MutationProject\\testinggithubapi\clonedrepos"
 MAX_JUNIT_TESTS = 40
 MIN_JUNIT_TESTS = 0
 
@@ -87,7 +87,9 @@ class FindProjects(object):
             if search_for_mvn == NUMBER_OF_MAVEN_FILES:
                 search_for_junit = self.searchRepoForJunitTests(repo_name, "java", username, password)["total_count"]
                 if search_for_junit < MAX_JUNIT_TESTS and search_for_junit > MIN_JUNIT_TESTS:
-                    repository_storage.append(Project(search_dico["items"][search_counter]))
+                    temp_project = Project(search_dico["items"][search_counter])
+                    if RunMutationTools(temp_project, CLONED_REPOS_PATH).setup_repo():
+                        repository_storage.append(temp_project)
             search_counter +=1
         return repository_storage
 
@@ -135,9 +137,9 @@ username, password = test.doAuthenticate()
 ## testing things
 #code_search_dico = searchRepoForJunitTests("Rory1994/WAW-Assessment4", "java")
 findProjects = FindProjects()
-temp_repo = findProjects.searchGithub("",10000,0, "java", "forks", "desc", 2, username, password)
+temp_repo = findProjects.searchGithub("",10000,0, "java", "forks", "desc", 4, username, password)
 for i in temp_repo:
     print "Name:",i.name, i.url
-    RunMutationTools(i, CLONED_REPOS_PATH).setup_repo()
+    #RunMutationTools(i, CLONED_REPOS_PATH).setup_repo()
     #a.run_jumble(i, "C:\Users\Megan\Documents\clonedRepos")
 #print "temp", temp_repo

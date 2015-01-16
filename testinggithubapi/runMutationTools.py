@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 import glob
 from project import Project
 
@@ -19,82 +20,47 @@ class RunMutationTools(object):
             break
         os.makedirs(self.path_cloned_repos+"\\"+str(max_file_number+1))
         print self.path_cloned_repos+"\\"+str(max_file_number+1)
-
-
         # clone repo
         print "DEBUG: Cloning", self.project.name ,"into", self.path_cloned_repos+"\\"+str(max_file_number+1)
         subprocess.call("git clone "+self.project.clone+" "+self.path_cloned_repos+"\\"+str(max_file_number+1), shell=True)
+        return self.path_cloned_repos+"\\"+str(max_file_number+1)
         #pass
 
-    def run_mvn(self):
-        pass
+    def run_mvn(self, current_file):
+        test_success = False
+        pom = self.find_pom(current_file)
+        print "DEBUG: Running tests for ", current_file
+        print "mvn -f "+ pom +" test"
+        #checkoutput if mvn tests fail delete folder
 
-    def find_classpath(self):
-        #find classpath
-        for root, dirnames, files in os.walk(os.getcwd() + "/" + self.project.name):
-            for i in dirnames:
-                if self.is_src(i):
-                    self.project.src = root + "/"+ i
-                    # "DEBUG: src is", self.project.src
-            for fname in files:
-                if fname == ".classpath":
-                    print "DEBUG:" , fname, "is classpath"
-                    self.project.classpath = os.path.join(root,fname)
-        if self.project.classpath == "":
-            # find src, libs, jars
-            print "DEBUG: Classpath not found"
-
-    def find_jars(self):
-        pass
-
-    def find_main(self):
-        for root, dirnames, files in os.walk(os.getcwd() + "/" + self.project.name):
-            for fname in files:
-                if self.is_java(fname):
-                    if self.is_main(root,fname):
-                        print "DEBUG: main class found:", fname
-                        self.project.main = fname
-        print "DEBUG: Main is", self.project.main
-
-    def is_main(self, root, fname):
-        #print str(root)+"/" +"/"+ fname
-        #print "DEBUG: Reading:", root,fname
-        f = open(root+"/"+ fname, 'r')
-        for i in f.readlines():
-            #print "DEBUG: "+ fname + " line:" + i
-            #if "main" in i:
-            #    print i
-            if "public static void main" in i:
-                f.close()
-                return True
-        f.close()
-        return False
-
-    def is_java(self, fname):
-        # Return true if file ends with .java
-        f = fname.split(".")
-        if f[-1] == "java":
-            print fname
+        try:
+            subprocess.check_output("mvn -f "+pom +" test", shell=True)
+            print "DEBUG: Test Successful"
             return True
+        except subprocess.CalledProcessError:
+            print "DEBUG: Test Failed"
+            print "DEBUG: Deleting", current_file
+            #shutil.rmtree(current_file)
+            return False
 
-    def is_src(self, directory):
-        if directory == "src":
-            return True
 
-    def compile_repo(self):
-        #compilie repository
-        subprocess.call("javac -cp " + self.project.classpath + self.project.main, shell=True)
-        #compitle tests
-        subprocess.call("java -cp " + self.project.classpath + self.project.main, shell=True)
+    def find_pom(self, current_file):
+        print "DEBUG: Locating pom.xml"
+        for root, dirnames, files in os.walk(current_file):
+            for i in files:
+                if i == 'pom.xml':
+                    return root+"\\"+i
+
+    def run_pit(self, pom):
+        # Run Pit
+        # Add plugin to build plugins in pom
+
+        # mvn -f pom org.pitest-maven:mutationCoverage
+        pass
 
     def setup_repo(self):
         # Clone repo
-        self.clone_repo()
-        # Find classpath
-        # self.find_classpath()
-        # # Find main
-        # self.find_main()
-        # # Compile tests and program
-        # self.project.classpath += ":" + str(test_jars)
-        # self.compile_repo()
+        current_file = self.clone_repo()
+        # run tests
+        return self.run_mvn(current_file)
 
