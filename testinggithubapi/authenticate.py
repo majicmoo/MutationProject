@@ -19,18 +19,18 @@ class Authenticate:
 
     def doAuthenticate(self):
         username = raw_input('Github username: ')
-        print username
+        #print username
         password = getpass.getpass("Github password: ")
         note = raw_input('Note (optional): ')
         url = urljoin(GITHUB_API, 'user')
-        print url
+        #print url
         payload = {}
         if note:
             payload['note']=note
         res = requests.post(url, auth = (username, password), data=json.dumps(payload))
-        print res
-        print res.text
-        print res.status_code
+        #print res
+        #print res.text
+        #print res.status_code
         j = json.loads(res.text)
         if res.status_code >= 400:
             msg = j.get('message', ' UNDEFINED ERROR (no error description from server)')

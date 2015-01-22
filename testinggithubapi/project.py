@@ -11,6 +11,7 @@ class Project(object):
         self.src = None
         self.classpath = ""
         self.main = ""
+        self.pom_location = None
 
 
 

@@ -21,7 +21,8 @@ class FindProjects(object):
         self.languages = ["python", "java", "ruby", "c"]
         self.count_github_access = 0
 
-    def searchGithub(self, keyword, maxsize, minsize, language, sortby, orderby, number_of_projects, username, password):
+    def search_github(self, keyword, maxsize, minsize, language, sortby,
+                      orderby, number_of_projects, username, password):
         # keyword: search keyword
         # maxsize: maximum size of repository
         # minsize: minimum size of repository
@@ -35,19 +36,19 @@ class FindProjects(object):
             return False
 
         #create search url
-        start = GITHUB_API+ '/search/repositories?'
-        search_keyword = "q="+keyword
-        search_language = 'language:'+language
-        sort = "sort="+sortby
-        order = "order="+orderby
-        size= "size:"+str(minsize) +".."+str(maxsize)
-        pagination = 1
+        start = GITHUB_API + '/search/repositories?'
+        search_keyword = "q=" + keyword
+        search_language = 'language:' + language
+        sort = "sort=" + sortby
+        order = "order=" + orderby
+        size = "size:" + str(minsize) + ".." + str(maxsize)
+        pagination = 2
         #Search for projects
         search_string = start + search_keyword + "+" + size + "+" + search_language + "&" + sort + "&" + order
         # store dictionary of results from search inquiry
         while True:
             temp = requests.get(search_string, auth=(username, password))
-            print 'DEBUG: Status',temp.status_code
+            #print 'DEBUG: Status',temp.status_code
             if temp.status_code == ACCEPTED_STATUS_CODE:
                 print "DEBUG: Requesting", search_string
                 #search_dico = json.load(requests.get(search_string, auth=(username, password)).json())
@@ -59,15 +60,16 @@ class FindProjects(object):
                 continue
         # search through found repository's and see if they contain files which contain junit
         # If they do store to repository_storage
-        print 'hello'
         repository_storage = []
         search_counter = 0
-        print len(search_dico["items"])
+        #print len(search_dico["items"])
         while len(repository_storage) < number_of_projects:
+            print search_counter
             if search_counter >= MAX_ITEMS:
+                #print "REACH MAX SEARCHS PAGE+1"
                 while True:
                     temp = requests.get(search_string+'&page='+str(pagination), auth=(username, password))
-                    print 'DEBUG: Status',temp.status_code
+                    #print 'DEBUG: Status',temp.status_code
                     if temp.status_code == ACCEPTED_STATUS_CODE:
                         search_dico = temp.json()
                         pagination += 1
@@ -77,23 +79,25 @@ class FindProjects(object):
                         print "DEBUG sleep:", SLEEP_TIME, "seconds"
                         time.sleep(SLEEP_TIME)
                         continue
-            print search_counter
-            repo_name= search_dico["items"][search_counter]["full_name"]
-            #search_for_junit = self.searchRepoForJunitTests(repo_name, "java")["total_count"]
-            #if search_for_junit < 40 and search_for_junit > 0:
-            #    repository_storage.append(Project(search_dico["items"][search_counter]))
+            #print search_counter
+            repo_name = search_dico["items"][search_counter]["full_name"]
 
             search_for_mvn = self.search_for_mvn(repo_name, username, password)["total_count"]
             if search_for_mvn == NUMBER_OF_MAVEN_FILES:
-                search_for_junit = self.searchRepoForJunitTests(repo_name, "java", username, password)["total_count"]
+                search_for_junit = self.search_repo_for_junit_tests(repo_name, "java",
+                                                                    username, password)["total_count"]
                 if search_for_junit < MAX_JUNIT_TESTS and search_for_junit > MIN_JUNIT_TESTS:
                     temp_project = Project(search_dico["items"][search_counter])
+                    print "*******************************************"
                     if RunMutationTools(temp_project, CLONED_REPOS_PATH).setup_repo():
+                        print "*******************************************"
                         repository_storage.append(temp_project)
-            search_counter +=1
+            search_counter += 1
+            #print "PAGE NUMBER:", pagination
+            #print "ENDED ON:", search_string+'&page='+str(pagination)
         return repository_storage
 
-    def searchRepoForJunitTests(self, repo, language, username, password):
+    def search_repo_for_junit_tests(self, repo, language, username, password):
         # search repository (given by repo) for junit tests
         start = "https://api.github.com/search/code"
         keyword = "?q=junit"
@@ -104,7 +108,7 @@ class FindProjects(object):
         while True:
             print 'DEBUG: requesting', search_string
             temp = requests.get(search_string, auth=(username, password))
-            print 'status code', temp.status_code
+            #print 'status code', temp.status_code
             if temp.status_code == ACCEPTED_STATUS_CODE:
                 return temp.json()
             else:
@@ -122,7 +126,7 @@ class FindProjects(object):
         while True:
             print 'DEBUG: requesting', search_string
             temp = requests.get(search_string, auth=(username, password))
-            print 'status code', temp.status_code
+            #print 'status code', temp.status_code
             if temp.status_code == ACCEPTED_STATUS_CODE:
                 return temp.json()
             else:
@@ -137,9 +141,9 @@ username, password = test.doAuthenticate()
 ## testing things
 #code_search_dico = searchRepoForJunitTests("Rory1994/WAW-Assessment4", "java")
 findProjects = FindProjects()
-temp_repo = findProjects.searchGithub("",10000,0, "java", "forks", "desc", 4, username, password)
+temp_repo = findProjects.search_github("", 10000, 0, "java", "forks", "desc", 6, username, password)
 for i in temp_repo:
-    print "Name:",i.name, i.url
+    print "Name:", i.name, i.url
     #RunMutationTools(i, CLONED_REPOS_PATH).setup_repo()
     #a.run_jumble(i, "C:\Users\Megan\Documents\clonedRepos")
 #print "temp", temp_repo
